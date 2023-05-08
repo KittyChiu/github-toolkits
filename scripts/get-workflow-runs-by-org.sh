@@ -1,5 +1,6 @@
 #!/bin/bash
 # Get a list of workflow runs by organization
+# The gh run list -L option has a maximum of 1000, that is it will only fetch 1000 runs.
 #
 # Usage: ./get-workflow-runs-by-org.sh <org_name> <start_date YYYY-MM-DD> <end_dat YYYY-MM-DD>
 
@@ -22,7 +23,7 @@ do
     reponame=$(echo $a_repo | cut -d'/' -f2)
 
     # Get the workflow runs for the repo
-    runs=$(gh run list --repo $a_repo --created $start_date..$end_date --json 'conclusion,createdAt,displayTitle,event,headBranch,name,number,startedAt,status,updatedAt,url,workflowName')
+    runs=$(gh run list -L 1000 --repo $a_repo --created $start_date..$end_date --json 'conclusion,createdAt,displayTitle,event,headBranch,name,number,startedAt,status,updatedAt,url,workflowName')
 
     # Add the owner and reponame to the output
     echo $runs | jq --arg org $owner --arg repo $reponame '[.[] | .org = $org | .repo = $repo ]' >> workflow-runs-raw.json

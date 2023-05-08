@@ -1,0 +1,6 @@
+Date,Product,SKU,Quantity,Unit Type,Price Per Unit ($),Multiplier,Owner,Repository Slug,Username,Actions Workflow,Notes
+2022-11-08,Actions,Compute - UBUNTU,1,minute,0.008,1.0,contoso-org,security-demo-juice,developer123,.github/workflows/lock.yml,
+2022-11-08,Actions,Compute - UBUNTU,1,minute,0.008,1.0,contoso-org,security-demo-juice,developer123,.github/workflows/stale.yml,
+2022-11-08,Actions,Compute - UBUNTU,17,minute,0.008,1.0,contoso-org,security-demo-cve,developer123,.github/workflows/codeql.yml,
+2022-11-08,Actions,Compute - UBUNTU,5,minute,0.008,1.0,contoso-org,security-demo-cve,dependabot[bot],.github/workflows/Checks.yml,
+2022-11-08,Actions,Compute - UBUNTU,5,minute,0.008,1.0,contoso-org,security-demo-cve,dependabot[bot],.github/workflows/README-examples.yml,
