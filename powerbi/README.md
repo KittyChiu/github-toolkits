@@ -19,7 +19,7 @@ Visualizer tool
 - [PowerBI Desktop](https://powerbi.microsoft.com/en-us/downloads/).
 
 Artifact file(s)
-- [github-usage-dashboard.pbix](github-usage-dashboard.pbix)
+- [github-usage-dashboard.pbit](github-usage-dashboard.pbit)
 
 ## Dashboard for Workflow Runs
 
@@ -40,4 +40,4 @@ Visualizer tool
 Artifact file(s)
 
 - [get-workflow-runs-by-org.sh](./scripts/get-workflow-runs-by-org.sh)
-- [github-workflow-runs-dashboard.pbix](github-workflow-runs-dashboard.pbix)
+- [github-workflow-runs-dashboard.pbit](github-workflow-runs-dashboard.pbit)
