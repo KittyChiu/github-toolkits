@@ -1,0 +1,43 @@
+# Scenario: When a new issue is created, a new branch and a pull request are created automatically.
+
+name: Convert issue to pull request
+
+on:
+  issues:
+    types: [opened]
+
+env:
+  HEAD_BRANCH: feature/${{ github.event.issue.number }}
+  BASE_BRANCH: main
+
+jobs:
+  convert-issue:
+    # if: contains(github.event.issue.labels.*.name, 'new work')
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Create new branch
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git fetch origin '${{ env.BASE_BRANCH }}'
+          git checkout -b '${{ env.HEAD_BRANCH }}'
+          git commit --allow-empty --message 'This branch is created automatically by [create-pr-on-issue]'
+          git push origin '${{ env.HEAD_BRANCH }}'
+
+      - name: Convert to pull request
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.pulls.create({
+              accept: 'application/vnd.github+json',
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue: context.issue.number, 
+              head: '${{ env.HEAD_BRANCH }}',
+              base: '${{ env.BASE_BRANCH }}',
+              draft: true
+            })
