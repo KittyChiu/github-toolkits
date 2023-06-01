@@ -26,7 +26,7 @@ do
     runs=$(gh run list -L 1000 --repo $a_repo --created $start_date..$end_date --json 'conclusion,createdAt,displayTitle,event,headBranch,name,number,startedAt,status,updatedAt,url,workflowName')
 
     # Add the owner and reponame to the output
-    echo $runs | jq --arg org $owner --arg repo $reponame '[.[] | .org = $org | .repo = $repo ]' >> workflow-runs-raw.json
+    echo $runs | jq --arg org $owner --arg repo $reponame '[.[] | .org = $org | .repo = $repo ]' | jq '[.[] | .duration = (.updatedAt | fromdate) - (.startedAt | fromdate) ]' >> workflow-runs-raw.json
 done
 
 # Merge the json arrays into a single array
