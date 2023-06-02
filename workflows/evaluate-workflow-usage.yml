@@ -1,4 +1,4 @@
-# Evaluate actions execution time
+# Evaluate actions execution time and output as job summary
 
 on:
   workflow_dispatch:
@@ -16,51 +16,43 @@ jobs:
       REPO_NAME: ${{ github.repository }}
 
     steps:
-      - name: Get all runs
+      - name: Evaluate actions consumption
         run: |
+          echo "Parse job summary table header"
+          echo "| Workflow | Average duration | Success rate | Total runs |" > $GITHUB_STEP_SUMMARY
+          echo "| -------- | ---------------- | ------------ | ---------- |" >> $GITHUB_STEP_SUMMARY
+
+          echo "Get all runs"
           gh run list -L 1000 --repo ${{ env.REPO_NAME }} --created ${{ env.START_DATE }}..${{ env.END_DATE }} --json 'conclusion,createdAt,displayTitle,event,headBranch,name,number,startedAt,status,updatedAt,url,workflowName' | jq '[.[] | .duration = (.updatedAt | fromdate) - (.startedAt | fromdate) ]' > runs.json
           cat runs.json
 
-      - name: Filter runs by workflow name
-        run: |
+          echo "Filter runs by workflow name"
           jq '[.[] | select(.workflowName == "${{ env.WORKFLOW_NAME }}") ]' runs.json > runs-filtered.json
           cat runs-filtered.json
 
-      - name: Evaluate total runs
-        id: total_runs
-        run: |
+          echo "Evaluate total runs"
           total_runs=$(jq '[.[] ] | length' runs-filtered.json)
-          echo "total_runs=$total_runs" >> $GITHUB_OUTPUT
 
-      - name: Evaluate average duration
-        id: average_duration
-        run: |
-          [[ ${{ steps.total_runs.outputs.total_runs }} > 0 ]] && raw_average_duration=$(jq '[.[] | .duration ] | add/length' runs-filtered.json) || raw_average_duration=0 
+          echo "Evaluate average duration"
+          [[ $total_runs > 0 ]] && raw_average_duration=$(jq '[.[] | .duration ] | add/length' runs-filtered.json) || raw_average_duration=0 
           average_duration=$(awk -v var1="$raw_average_duration" -v var2="1" 'BEGIN {printf "%.2fs", var1/var2}')
-          echo "average_duration=$average_duration" >> $GITHUB_OUTPUT
 
-      - name: Evaluate total success
-        id: total_success
-        run: |
+          echo "Evaluate number of success or skipped runs"
           total_success=$(jq '[.[] | select(.conclusion as $c | ["success", "skipped"] | index($c) ) ] | length' runs-filtered.json)
-          echo "total_success=$total_success" >> $GITHUB_OUTPUT
 
-      - name: Evaluate success percentage
-        id: percentage_success
-        run: |
-          if [[ ${{ steps.total_success.outputs.total_success }} > 0 ]] && [[ ${{ steps.total_runs.outputs.total_runs }} > 0 ]]; then
-            percentage_success=$(awk -v var1="${{ steps.total_success.outputs.total_success }}" -v var2="${{ steps.total_runs.outputs.total_runs }}" 'BEGIN {printf "%.1f%", var1/var2*100}')
+          echo "Evaluate percentage of success or skipped runs"
+          if [[ $total_success > 0 ]] && [[ $total_runs > 0 ]]; then
+            percentage_success=$(awk -v var1="$total_success" -v var2="$total_runs" 'BEGIN {printf "%.1f%", var1/var2*100}')
           else
             percentage_success=0.0%
           fi
-          echo "percentage_success=$percentage_success" >> $GITHUB_OUTPUT
 
-      - name: Compile markdown row
-        run: |
+          echo "Parse results to markdown table"
           echo "| ${{ env.WORKFLOW_NAME }} \
-          | ${{ steps.average_duration.outputs.average_duration }} \
-          | ${{ steps.percentage_success.outputs.percentage_success }} \
-          | ${{ steps.total_runs.outputs.total_runs }} \
-          |"
+          | $average_duration \
+          | $percentage_success \
+          | $total_runs \
+          |" >> $GITHUB_STEP_SUMMARY
 
           
+
