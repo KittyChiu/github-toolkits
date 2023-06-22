@@ -4,10 +4,6 @@ name: Generate Workflow Runs Report
 on:
   workflow_dispatch:
     
-env:
-  START_DATE: 2023-04-01
-  END_DATE: 2023-06-21
-
 jobs:
   evaluate-actions-consumption:
     runs-on: ubuntu-latest
@@ -16,6 +12,11 @@ jobs:
       REPO_NAME: ${{ github.repository }}
 
     steps:
+      - name: Set dates to be used by other steps
+        run: |
+          echo "START_DATE=$(date -d '-1 month' +%Y-%m-%d)" >> "$GITHUB_ENV"
+          echo "END_DATE=$(date +%Y-%m-%d)" >> "$GITHUB_ENV"
+
       - name: Evaluate actions consumption
         run: |
           echo "Parse job summary table header"
