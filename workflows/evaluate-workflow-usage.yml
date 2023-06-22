@@ -1,4 +1,5 @@
 # Evaluate actions execution time and output as job summary
+name: Generate Workflow Runs Report
 
 on:
   workflow_dispatch:
@@ -6,7 +7,6 @@ on:
 env:
   START_DATE: 2023-04-01
   END_DATE: 2023-06-21
-  WORKFLOW_NAME: <WORKFLOW_NAME>
 
 jobs:
   evaluate-actions-consumption:
@@ -19,7 +19,6 @@ jobs:
       - name: Evaluate actions consumption
         run: |
           echo "Parse job summary table header"
-          echo "## ${{ env.WORKFLOW_NAME }}" >> output.md
           echo "Consumption summary:" >> output.md
           echo "| Workflow | Average duration | Success rate | Total runs |" >> output.md
           echo "| -------- | ---------------- | ------------ | ---------- |" >> output.md
@@ -28,37 +27,49 @@ jobs:
           gh run list -L 1000 --repo ${{ env.REPO_NAME }} --created ${{ env.START_DATE }}..${{ env.END_DATE }} --json 'conclusion,createdAt,displayTitle,event,headBranch,name,number,startedAt,status,updatedAt,url,workflowName' | jq '[.[] | .duration = (.updatedAt | fromdate) - (.startedAt | fromdate) ]' > runs.json
           cat runs.json
 
-          echo "Filter runs by workflow name"
-          jq '[.[] | select(.workflowName == "${{ env.WORKFLOW_NAME }}") ]' runs.json > runs-filtered.json
-          cat runs-filtered.json
+          echo "Generate list of workflow names from runs.json"
+          jq '[.[] | .workflowName ] | unique' runs.json | jq -r '.[]' > workflow-names.txt
+          cat workflow-names.txt
 
-          echo "Evaluate total runs"
-          total_runs=$(jq '[.[] ] | length' runs-filtered.json)
+          while read -r workflow_name; 
+          do
+            echo "Evaluating: $workflow_name"
 
-          echo "Evaluate average duration"
-          [[ $total_runs > 0 ]] && raw_average_duration=$(jq '[.[] | .duration ] | add/length' runs-filtered.json) || raw_average_duration=0 
-          average_duration=$(awk -v var1="$raw_average_duration" -v var2="1" 'BEGIN {printf "%.2fs", var1/var2}')
+            echo "Filter runs by workflow name"
+            jq --arg wf_name "$workflow_name" '[.[] | select(.workflowName == $wf_name) ]' runs.json > runs-filtered.json
 
-          echo "Evaluate number of success or skipped runs"
-          total_success=$(jq '[.[] | select(.conclusion as $c | ["success", "skipped"] | index($c) ) ] | length' runs-filtered.json)
+            echo "Evaluate total runs"
+            total_runs=$(jq '[.[] ] | length' runs-filtered.json)
+            echo "...Total runs: $total_runs"
 
-          echo "Evaluate percentage of success or skipped runs"
-          if [[ $total_success > 0 ]] && [[ $total_runs > 0 ]]; then
-            percentage_success=$(awk -v var1="$total_success" -v var2="$total_runs" 'BEGIN {printf "%.1f%", var1/var2*100}')
-          else
-            percentage_success=0.0%
-          fi
+            echo "Evaluate average duration"
+            [[ $total_runs > 0 ]] && raw_average_duration=$(jq '[.[] | .duration ] | add/length' runs-filtered.json) || raw_average_duration=0 
+            average_duration=$(awk -v var1="$raw_average_duration" -v var2="1" 'BEGIN {printf "%.2fs", var1/var2}')
+            echo "...Average duration: $average_duration"
 
-          echo "Parse results to markdown table"
-          echo "| ${{ env.WORKFLOW_NAME }} \
-          | $average_duration \
-          | $percentage_success \
-          | $total_runs \
-          |" >> output.md
+            echo "Evaluate number of success or skipped runs"
+            total_success=$(jq '[.[] | select(.conclusion as $c | ["success", "skipped"] | index($c) ) ] | length' runs-filtered.json)
+            echo "...Total success or skipped runs: $total_success"
 
-      - name: Print result to issue
+            echo "Evaluate percentage of success or skipped runs"
+            if [[ $total_success > 0 ]] && [[ $total_runs > 0 ]]; then
+              percentage_success=$(awk -v var1="$total_success" -v var2="$total_runs" 'BEGIN {printf "%.1f%", var1/var2*100}')
+            else
+              percentage_success=0.0%
+            fi
+            echo "...Percentage success or skipped runs: $percentage_success"
+
+            echo "Parse results to markdown table"
+            echo "| $workflow_name \
+            | $average_duration \
+            | $percentage_success \
+            | $total_runs \
+            |" >> output.md
+          done < workflow-names.txt
+
+      - name: Print summary to issue
         uses: peter-evans/create-issue-from-file@v4
         with:
-          title: Workflow consumption summary - ${{ env.WORKFLOW_NAME }}
+          title: Workflow runs consumption summary (${{ env.START_DATE }} - ${{ env.END_DATE }})
           content-filepath: output.md    
 
