@@ -6,7 +6,7 @@ on:
 env:
   START_DATE: 2023-04-01
   END_DATE: 2023-06-21
-  WORKFLOW_NAME: Migration (Actions)
+  WORKFLOW_NAME: <WORKFLOW_NAME>
 
 jobs:
   evaluate-actions-consumption:
