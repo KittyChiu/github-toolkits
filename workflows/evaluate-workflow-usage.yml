@@ -6,7 +6,7 @@ on:
 env:
   START_DATE: 2023-05-31
   END_DATE: 2023-06-02
-  WORKFLOW_NAME: Convert issue to pull request
+  WORKFLOW_NAME: <workflow_name>
 
 jobs:
   evaluate-actions-consumption:
