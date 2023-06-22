@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     
 env:
-  START_DATE: 2023-05-31
-  END_DATE: 2023-06-02
-  WORKFLOW_NAME: <workflow_name>
+  START_DATE: 2023-04-01
+  END_DATE: 2023-06-21
+  WORKFLOW_NAME: Migration (Actions)
 
 jobs:
   evaluate-actions-consumption:
@@ -19,8 +19,10 @@ jobs:
       - name: Evaluate actions consumption
         run: |
           echo "Parse job summary table header"
-          echo "| Workflow | Average duration | Success rate | Total runs |" > $GITHUB_STEP_SUMMARY
-          echo "| -------- | ---------------- | ------------ | ---------- |" >> $GITHUB_STEP_SUMMARY
+          echo "## ${{ env.WORKFLOW_NAME }}" >> output.md
+          echo "Consumption summary:" >> output.md
+          echo "| Workflow | Average duration | Success rate | Total runs |" >> output.md
+          echo "| -------- | ---------------- | ------------ | ---------- |" >> output.md
 
           echo "Get all runs"
           gh run list -L 1000 --repo ${{ env.REPO_NAME }} --created ${{ env.START_DATE }}..${{ env.END_DATE }} --json 'conclusion,createdAt,displayTitle,event,headBranch,name,number,startedAt,status,updatedAt,url,workflowName' | jq '[.[] | .duration = (.updatedAt | fromdate) - (.startedAt | fromdate) ]' > runs.json
@@ -52,7 +54,11 @@ jobs:
           | $average_duration \
           | $percentage_success \
           | $total_runs \
-          |" >> $GITHUB_STEP_SUMMARY
+          |" >> output.md
 
-          
+      - name: Print result to issue
+        uses: peter-evans/create-issue-from-file@v4
+        with:
+          title: Workflow consumption summary - ${{ env.WORKFLOW_NAME }}
+          content-filepath: output.md    
 
