@@ -25,8 +25,10 @@ This workflow is to generate a summary of workflow runs within the hosted reposi
 
 ## `create-pr-on-new-issue.yml`
 
-This workflow attemps to orchestrate the beginning of [GitHub Flow](https://docs.github.com/en/get-started/quickstart/github-flow).
+This workflow attempts to orchestrate the beginning of [GitHub Flow](https://docs.github.com/en/get-started/quickstart/github-flow).
 
+
+#### Flowchart
 ```mermaid
 
 flowchart LR
