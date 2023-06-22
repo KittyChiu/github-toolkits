@@ -21,3 +21,22 @@ This workflow is to generate a summary of workflow runs within the hosted reposi
 
 #### Variation
 - Current duration between START_DATE and END_DATE is set to one month. Change to desired duration.
+
+
+## `create-pr-on-new-issue.yml`
+
+This workflow attemps to orchestrate the beginning of [GitHub Flow](https://docs.github.com/en/get-started/quickstart/github-flow).
+
+```mermaid
+
+flowchart LR
+    A[Issue Opened] --> B[Create branch]
+    B --> C[Convert Issue to Pull Request]
+
+```
+
+#### How to use
+- Create a `yml` workflow under `.github/workflows/` folder
+
+#### Expected outcomes
+- When a new issue is created, a new branch and a pull request are automatically created.
