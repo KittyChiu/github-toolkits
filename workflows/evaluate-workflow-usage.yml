@@ -14,7 +14,7 @@ jobs:
     steps:
       - name: Set dates to be used by other steps
         run: |
-          echo "START_DATE=$(date -d '-1 month' +%Y-%m-%d)" >> "$GITHUB_ENV"
+          echo "START_DATE=$(date -v -1w +%Y-%m-%d)" >> "$GITHUB_ENV"
           echo "END_DATE=$(date +%Y-%m-%d)" >> "$GITHUB_ENV"
 
       - name: Evaluate actions consumption
