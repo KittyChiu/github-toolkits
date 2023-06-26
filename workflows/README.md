@@ -2,11 +2,11 @@
 
 These are proof of concepts for automation using Actions. They are not production ready. You can use them as a starting point to build your own.
 
-GitHub [Actions documentation](powerbi/README.md) has a rich set of articles from Getting Started to referenced librarys for Actions context.
+GitHub [Actions documentation](https://docs.github.com/en/actions) has a rich set of articles from Getting Started to referenced librarys for Actions context.
 
 ## `evaluate-workflow-usage.yml`
 
-This workflow is to generate a summary of workflow runs within the hosted repository with the given date period.
+This workflow is to generate a summary of workflow runs within the hosted repository with the given date period. The summary is represented in both Value Stream view and Table view.
 
 #### Sample report
 ![screenshot](assets/evaluate-workflow-usage-screenshot.png)
@@ -16,11 +16,12 @@ This workflow is to generate a summary of workflow runs within the hosted reposi
 - Set the desired `on` trigger
 
 #### Expected outcomes
-- An Issue will be created with the report data
+- An Issue will be created with the formatted data
 
 
-#### Variation
-- Current duration between START_DATE and END_DATE is set to one month. Change to desired duration.
+#### Variations
+- `START_DATE` and `END_DATE` in `step: Set dates` - They are set to one month apart. This can be modified to the desired duration.
+- Templates in `step: Create Mermaid diagram template` and `step: Create Table template` - This can be removed if using predefined markdown templates (e.g. defining styles for mermaid diagram) If this is the case, update `step: Format calculated result with templates` to use the predefined template.
 
 
 ## `create-pr-on-new-issue.yml`

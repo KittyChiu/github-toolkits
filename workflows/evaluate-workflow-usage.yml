@@ -12,23 +12,34 @@ jobs:
       REPO_NAME: ${{ github.repository }}
 
     steps:
-      - name: Set dates to be used by other steps
+      - name: Set dates
         run: |
           echo "START_DATE=$(date -d '-1 month' +%Y-%m-%d)" >> "$GITHUB_ENV"
           echo "END_DATE=$(date +%Y-%m-%d)" >> "$GITHUB_ENV"
 
+      - name: Create Mermaid diagram template
+        run: |
+          echo "## Value stream view" >> mermaid.md
+          echo -e '```mermaid\n' >> mermaid.md
+          echo "timeline" >> mermaid.md
+          echo "    Stage: Average run duration : Success rate : Frequency" >> mermaid.md
+          echo "PLACEHOLDER" >> mermaid.md
+          echo -e '```\n' >> mermaid.md
+
+      - name: Create Table template
+        run: |
+          echo "## Consumption table view" >> table.md
+          echo "| Workflow | Average duration | Success rate | Total runs |" >> table.md
+          echo "| -------- | ---------------- | ------------ | ---------- |" >> table.md
+          echo "PLACEHOLDER" >> table.md
+
       - name: Evaluate actions consumption
         run: |
-          echo "Parse job summary table header"
-          echo "Consumption summary:" >> output.md
-          echo "| Workflow | Average duration | Success rate | Total runs |" >> output.md
-          echo "| -------- | ---------------- | ------------ | ---------- |" >> output.md
-
           echo "Get all runs"
           gh run list -L 1000 --repo ${{ env.REPO_NAME }} --created ${{ env.START_DATE }}..${{ env.END_DATE }} --json 'conclusion,createdAt,displayTitle,event,headBranch,name,number,startedAt,status,updatedAt,url,workflowName' | jq '[.[] | .duration = (.updatedAt | fromdate) - (.startedAt | fromdate) ]' > runs.json
           cat runs.json
 
-          echo "Generate list of workflow names from runs.json"
+          echo "Generate list of workflow names from runs.json, OR define the Value Stream actions in workflow-names.txt and comment 2 lines below"
           jq '[.[] | .workflowName ] | unique' runs.json | jq -r '.[]' > workflow-names.txt
           cat workflow-names.txt
 
@@ -60,17 +71,40 @@ jobs:
             fi
             echo "...Percentage success or skipped runs: $percentage_success"
 
-            echo "Parse results to markdown table"
+            echo "Parse Table: Calculated row"
             echo "| $workflow_name \
             | $average_duration \
             | $percentage_success \
             | $total_runs \
-            |" >> output.md
-          done < workflow-names.txt
+            |" >> table_data.md
 
-      - name: Print summary to issue
+            echo "Parse Mermaid diagram: Calculated event column"
+            echo "    $workflow_name: $average_duration : $percentage_success : $total_runs" >> mermaid_data.md
+
+          done < workflow-names.txt
+          echo "Done evaluating actions consumption"
+
+      - name: Format calculated result with templates
+        run: |
+          echo "Apply Mermaid template"
+          sed -i -e '/PLACEHOLDER/{
+              r mermaid_data.md
+              d
+          }' mermaid.md
+
+          echo "Apply Table template"
+          sed -i -e '/PLACEHOLDER/{
+              r table_data.md
+              d
+          }' table.md
+
+          echo "Combine output files"
+          cat mermaid.md table.md > output.md
+
+      - name: Publish result to a new issue
         uses: peter-evans/create-issue-from-file@v4
         with:
           title: Workflow runs consumption summary (${{ env.START_DATE }} - ${{ env.END_DATE }})
           content-filepath: output.md    
+
 
