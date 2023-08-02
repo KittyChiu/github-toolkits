@@ -36,7 +36,8 @@ jobs:
       - name: Evaluate actions consumption
         run: |
           echo "Get all runs"
-          gh run list -L 1000 --repo ${{ env.REPO_NAME }} --created ${{ env.START_DATE }}..${{ env.END_DATE }} --json 'conclusion,createdAt,displayTitle,event,headBranch,name,number,startedAt,status,updatedAt,url,workflowName' | jq '[.[] | .duration = (.updatedAt | fromdate) - (.startedAt | fromdate) ]' > runs.json
+          gh run list -L 1000 --repo ${{ env.REPO_NAME }} --created ${{ env.START_DATE }}..${{ env.END_DATE }} --json 'conclusion,createdAt,displayTitle,event,headBranch,name,number,startedAt,status,updatedAt,url,workflowName' > raw.json
+          jq '[.[] | .duration = (.updatedAt | fromdate) - (.startedAt | fromdate) ]' raw.json > runs.json
           cat runs.json
 
           echo "Generate list of workflow names from runs.json, OR define the Value Stream actions in workflow-names.txt and comment 2 lines below"
@@ -106,5 +107,3 @@ jobs:
         with:
           title: Workflow runs consumption summary (${{ env.START_DATE }} - ${{ env.END_DATE }})
           content-filepath: output.md    
-
-
