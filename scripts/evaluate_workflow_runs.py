@@ -33,7 +33,7 @@ for workflow_name in workflow_names:
 
     # Evaluate the total number of runs
     total_runs = len(runs_filtered)
-    print(f'...Total runs: {total_runs}')
+    # print(f'...Total runs: {total_runs}')
 
     # Evaluate the average duration
     if total_runs > 0:
@@ -41,18 +41,18 @@ for workflow_name in workflow_names:
         average_duration = f'{raw_average_duration:.2f}s'
     else:
         average_duration = '0.00s'
-    print(f'...Average duration: {average_duration}')
+    # print(f'...Average duration: {average_duration}')
 
     # Evaluate the number of successful or skipped runs
     total_success = len([run for run in runs_filtered if run['conclusion'] in ['success', 'skipped']])
-    print(f'...Total success or skipped runs: {total_success}')
+    # print(f'...Total success or skipped runs: {total_success}')
 
     # Evaluate the percentage of successful or skipped runs
     if total_runs > 0:
         percentage_success = f'{total_success / total_runs * 100:.1f}%'
     else:
         percentage_success = '0.0%'
-    print(f'...Percentage success or skipped runs: {percentage_success}')
+    # print(f'...Percentage success or skipped runs: {percentage_success}')
 
     # Output the results to a CSV file
     with open('workflow-stats.csv', 'a') as f:
