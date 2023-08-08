@@ -1,4 +1,13 @@
-# Evaluate actions execution time and output as job summary
+# This workflow evaluates actions execution time and outputs a job summary.
+# It uses the `get_workflow_runs` Python script to call the GitHub API and retrieve workflow runs, which are output to runs.json.
+# It then generates a list of workflow names from runs.json and outputs the results to workflow-names.txt.
+# Finally, it evaluates workflow runs statistics using the `evaluate_workflow_runs` Python script, and outputs the results to workflow-stats.csv.
+# The workflow also generates a Mermaid diagram and table in Markdown format for the report.
+# The workflow is triggered by a manual workflow_dispatch event.
+#
+# Variations:
+# - Workflow names can also be manually defined and ordered in the workflow-names.txt file
+#
 name: Generate Workflow Runs Report
 
 on:
@@ -12,93 +21,72 @@ jobs:
       REPO_NAME: ${{ github.repository }}
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Set dates
         run: |
           echo "START_DATE=$(date -d '-1 month' +%Y-%m-%d)" >> "$GITHUB_ENV"
           echo "END_DATE=$(date +%Y-%m-%d)" >> "$GITHUB_ENV"
 
-      - name: Create Mermaid diagram template
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      # Use the `get_workflow_runs` Python script to call GitHub API and output to runs.json
+      - name: Get workflow runs
+        run: |
+          python ./.github/scripts/get_workflow_runs.py ${{ github.repository_owner }} $(echo "${{ github.repository }}" | cut -d'/' -f2) ${{ env.START_DATE }} ${{ env.END_DATE }}
+          cat runs.json
+
+      # Generate list of workflow names from runs.json, OR define the Value Stream actions in workflow-names.txt and comment this step
+      - name: Get list of workflow names from runs.json
+        run: |
+          jq '[.[] | .name ] | unique' runs.json | jq -r '.[]' > workflow-names.txt
+          cat workflow-names.txt 
+
+      # Evaluate workflow runs statistics using `evaluate_workflow_runs` Python script, and output to workflow-stats.csv
+      - name: Evaluate actions consumption
+        run: |
+          echo "Evaluating workflow runs statistics"
+          python ./.github/scripts/evaluate_workflow_runs.py 
+          cat workflow-stats.csv
+
+      # Generate Mermaid diagram in Markdown format 
+      - name: Generate Mermaid diagram in markdown
         run: |
           echo "## Value stream view" >> mermaid.md
           echo -e '```mermaid\n' >> mermaid.md
           echo "timeline" >> mermaid.md
           echo "    Stage: Average run duration : Success rate : Frequency" >> mermaid.md
-          echo "PLACEHOLDER" >> mermaid.md
+
+          tail -n +2 workflow-stats.csv | while IFS=, read -r workflow_name average_duration percentage_success total_runs;
+          do
+            echo "Parse Mermaid diagram: Calculated event column"
+            echo "    $workflow_name: $average_duration : $percentage_success : $total_runs" >> mermaid.md
+          done
           echo -e '```\n' >> mermaid.md
 
-      - name: Create Table template
+      # Generate table in Markdown format 
+      - name: Generate Table in markdown
         run: |
           echo "## Consumption table view" >> table.md
           echo "| Workflow | Average duration | Success rate | Total runs |" >> table.md
           echo "| -------- | ---------------- | ------------ | ---------- |" >> table.md
-          echo "PLACEHOLDER" >> table.md
 
-      - name: Evaluate actions consumption
-        run: |
-          echo "Get all runs"
-          gh run list -L 1000 --repo ${{ env.REPO_NAME }} --created ${{ env.START_DATE }}..${{ env.END_DATE }} --json 'conclusion,createdAt,displayTitle,event,headBranch,name,number,startedAt,status,updatedAt,url,workflowName' > raw.json
-          jq '[.[] | .duration = (.updatedAt | fromdate) - (.startedAt | fromdate) ]' raw.json > runs.json
-          cat runs.json
-
-          echo "Generate list of workflow names from runs.json, OR define the Value Stream actions in workflow-names.txt and comment 2 lines below"
-          jq '[.[] | .workflowName ] | unique' runs.json | jq -r '.[]' > workflow-names.txt
-          cat workflow-names.txt
-
-          while read -r workflow_name; 
+          tail -n +2 workflow-stats.csv | while IFS=, read -r workflow_name average_duration percentage_success total_runs;
           do
-            echo "Evaluating: $workflow_name"
-
-            echo "Filter runs by workflow name"
-            jq --arg wf_name "$workflow_name" '[.[] | select(.workflowName == $wf_name) ]' runs.json > runs-filtered.json
-
-            echo "Evaluate total runs"
-            total_runs=$(jq '[.[] ] | length' runs-filtered.json)
-            echo "...Total runs: $total_runs"
-
-            echo "Evaluate average duration"
-            [[ $total_runs > 0 ]] && raw_average_duration=$(jq '[.[] | .duration ] | add/length' runs-filtered.json) || raw_average_duration=0 
-            average_duration=$(awk -v var1="$raw_average_duration" -v var2="1" 'BEGIN {printf "%.2fs", var1/var2}')
-            echo "...Average duration: $average_duration"
-
-            echo "Evaluate number of success or skipped runs"
-            total_success=$(jq '[.[] | select(.conclusion as $c | ["success", "skipped"] | index($c) ) ] | length' runs-filtered.json)
-            echo "...Total success or skipped runs: $total_success"
-
-            echo "Evaluate percentage of success or skipped runs"
-            if [[ $total_success > 0 ]] && [[ $total_runs > 0 ]]; then
-              percentage_success=$(awk -v var1="$total_success" -v var2="$total_runs" 'BEGIN {printf "%.1f%", var1/var2*100}')
-            else
-              percentage_success=0.0%
-            fi
-            echo "...Percentage success or skipped runs: $percentage_success"
-
             echo "Parse Table: Calculated row"
             echo "| $workflow_name \
             | $average_duration \
             | $percentage_success \
             | $total_runs \
-            |" >> table_data.md
-
-            echo "Parse Mermaid diagram: Calculated event column"
-            echo "    $workflow_name: $average_duration : $percentage_success : $total_runs" >> mermaid_data.md
-
-          done < workflow-names.txt
-          echo "Done evaluating actions consumption"
+            |" >> table.md
+          done
 
       - name: Format calculated result with templates
         run: |
-          echo "Apply Mermaid template"
-          sed -i -e '/PLACEHOLDER/{
-              r mermaid_data.md
-              d
-          }' mermaid.md
-
-          echo "Apply Table template"
-          sed -i -e '/PLACEHOLDER/{
-              r table_data.md
-              d
-          }' table.md
-
           echo "Combine output files"
           cat mermaid.md table.md > output.md
 
@@ -107,3 +95,5 @@ jobs:
         with:
           title: Workflow runs consumption summary (${{ env.START_DATE }} - ${{ env.END_DATE }})
           content-filepath: output.md    
+
+
