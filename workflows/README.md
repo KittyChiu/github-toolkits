@@ -13,6 +13,7 @@ This workflow is to generate a summary of workflow runs within the hosted reposi
 
 #### How to use
 - Create a `yml` workflow under `.github/workflows/` folder
+- Add `get_workflow_runs.py` and `evaluate_workflow_runs.py` to `.github/scripts/` folder
 - Set the desired `on` trigger
 
 #### Expected outcomes
@@ -20,8 +21,9 @@ This workflow is to generate a summary of workflow runs within the hosted reposi
 
 
 #### Variations
+- Workflow names can also be manually defined and ordered in the workflow-names.txt file.
 - `START_DATE` and `END_DATE` in `step: Set dates` - They are set to one month apart. This can be modified to the desired duration.
-- Templates in `step: Create Mermaid diagram template` and `step: Create Table template` - This can be removed if using predefined markdown templates (e.g. defining styles for mermaid diagram) If this is the case, update `step: Format calculated result with templates` to use the predefined template.
+- Templates in `step: Generate Mermaid diagram in markdown` and `step: Generate Mermaid diagram in markdown` need to be updated.
 
 
 ## `create-pr-on-new-issue.yml`
