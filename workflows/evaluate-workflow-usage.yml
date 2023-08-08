@@ -6,7 +6,9 @@
 # The workflow is triggered by a manual workflow_dispatch event.
 #
 # Variations:
-# - Workflow names can also be manually defined and ordered in the workflow-names.txt file
+# - Workflow names can also be manually defined and ordered in the workflow-names.txt file.
+# - `START_DATE` and `END_DATE` in `step: Set dates` - They are set to one month apart. This can be modified to the desired duration.
+# - Templates in `step: Generate Mermaid diagram in markdown` and `step: Generate Mermaid diagram in markdown` need to be updated.
 #
 name: Generate Workflow Runs Report
 
