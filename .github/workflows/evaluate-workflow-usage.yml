@@ -47,7 +47,7 @@ jobs:
       - name: Get Scripts
         run: |
           wget -P ${{ env.SCRIPTS_PATH }} \
-            ${{ env.RAW_ENDPOINT }}/get_org_workflow_runs.py \
+            ${{ env.RAW_ENDPOINT }}/get_workflow_runs.py \
             ${{ env.RAW_ENDPOINT }}/evaluate_workflow_runs.py
 
       - name: Install dependencies
