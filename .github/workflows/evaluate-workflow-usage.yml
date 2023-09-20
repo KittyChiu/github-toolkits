@@ -14,6 +14,16 @@ name: Generate Workflow Runs Report
 
 on:
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      start-date:
+        description: 'The start date for the report'
+        type: string
+        required: false
+      end-date:
+        description: 'The end date for the report'
+        type: string
+        required: false
     
 jobs:
   evaluate-actions-consumption:
@@ -21,15 +31,24 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       REPO_NAME: ${{ github.repository }}
+      START_DATE: ${{ github.event.inputs.start-date }}
+      END_DATE: ${{ github.event.inputs.end-date }}
+      SCRIPTS_PATH: .github/scripts
+      RAW_ENDPOINT: https://raw.githubusercontent.com/KittyChiu/github-toolkits/main/scripts
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Set start date
+        if: ${{ github.event.inputs.start-date == '' }}
+        run: echo "START_DATE=$(date -d '-1 month' +%Y-%m-%d)" >> "$GITHUB_ENV"
+      - name: Set end date
+        if: ${{ github.event.inputs.end-date == '' }}
+        run: echo "END_DATE=$(date +%Y-%m-%d)" >> "$GITHUB_ENV"
 
-      - name: Set dates
+      - name: Get Scripts
         run: |
-          echo "START_DATE=$(date -d '-1 month' +%Y-%m-%d)" >> "$GITHUB_ENV"
-          echo "END_DATE=$(date +%Y-%m-%d)" >> "$GITHUB_ENV"
+          wget -P ${{ env.SCRIPTS_PATH }} \
+            ${{ env.RAW_ENDPOINT }}/get_workflow_runs.py \
+            ${{ env.RAW_ENDPOINT }}/evaluate_workflow_runs.py
 
       - name: Install dependencies
         run: |
@@ -39,7 +58,7 @@ jobs:
       # Use the `get_workflow_runs` Python script to call GitHub API and output to runs.json
       - name: Get workflow runs
         run: |
-          python ./.github/scripts/get_workflow_runs.py ${{ github.repository_owner }} $(echo "${{ github.repository }}" | cut -d'/' -f2) ${{ env.START_DATE }} ${{ env.END_DATE }}
+          python ${{ env.SCRIPTS_PATH }}/get_workflow_runs.py ${{ github.repository_owner }} $(echo "${{ github.repository }}" | cut -d'/' -f2) ${{ env.START_DATE }} ${{ env.END_DATE }}
           cat runs.json
 
       # Generate list of workflow names from runs.json, OR define the Value Stream actions in workflow-names.txt and comment this step
@@ -52,7 +71,7 @@ jobs:
       - name: Evaluate actions consumption
         run: |
           echo "Evaluating workflow runs statistics"
-          python ./.github/scripts/evaluate_workflow_runs.py 
+          python ${{ env.SCRIPTS_PATH }}/evaluate_workflow_runs.py 
           cat workflow-stats.csv
 
       # Generate Mermaid diagram in Markdown format 
@@ -97,5 +116,3 @@ jobs:
         with:
           title: Workflow runs consumption summary (${{ env.START_DATE }} - ${{ env.END_DATE }})
           content-filepath: output.md    
-
-
