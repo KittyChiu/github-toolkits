@@ -25,10 +25,12 @@
 
 
 # Configuration
-repo="<owner>/<repo>"
+repo="<OWNER>/<REPO>"
 datetimestamp=$(date +"%Y-%m-%dT%H%M")
 temp_file="$datetimestamp-comment_body.txt"
-llm_model="<model name>" # e.g. llama3
+llm_model="<MODEL NAME>" # e.g. llama3
+title_prompt="Suggest one title to notes in "
+summarise_prompt="Summarise"
 
 # Create a blank issue with pre-populated label, title and body
 issue_url=$(gh issue create -R $repo --label "slack-notes" --title "Slack thread $datetimestamp" --body $1)
@@ -43,8 +45,8 @@ echo $comment_body > $temp_file
 encoded_comment_body=$(jq -s -R -r @uri $temp_file) 
 
 # Run ollama locally to summarise and give a title to the notes 
-summary=$(ollama run $llm_model summarise $encoded_comment_body)
-title=$(ollama run $llm_model "Suggest one title to notes in $encoded_comment_body")
+summary=$(ollama run $llm_model "$summarise_prompt $encoded_comment_body")
+title=$(ollama run $llm_model "$title_prompt $encoded_comment_body")
 trimmed_title=$(echo $title | sed -n -e 's/^.*"\([^"]*\)".*$/\1/p' -e 's/^.*\*\*\([^*]*\)\*\*.*$/\1/p')
 
 # Update issue with AI-generated summary and title
