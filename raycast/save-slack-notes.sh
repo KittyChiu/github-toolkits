@@ -18,10 +18,11 @@
 # Credit to ollama, llama3, and gh-slack.
 # 
 # Prerequisites
-# - Install ollama (https://ollama.com/)
-# - Deploy LLM model where ollama is installed e.g. llama3 (https://ollama.com/library/llama3)
-# - Install GitHub extension gh-slack (https://github.com/rneatherway/gh-slack)
-
+# - Install Ollama (https://ollama.com/)
+# - Deploy community LLM model on machine where ollama is installed e.g. llama3 (https://ollama.com/library/llama3)
+# - Install GitHub CLI and extension gh-slack (https://github.com/rneatherway/gh-slack)
+# - Check 'gh auth status' that you are logged in and authenticated, and granted enterprise SSO access permission
+# - Check you have access/authenticated to the Slack workspace
 
 
 # TODO Configurations
