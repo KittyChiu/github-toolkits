@@ -13,6 +13,16 @@
 # @raycast.author Kitty Chiu
 # @raycast.authorURL https://github.com/KittyChiu
 # @raycast.argument1 { "type": "text", "placeholder": "Slack permalink", "percentEncoded": false }
+# 
+# Objective: Automate notetaking from Slack discussion into Github Issue. 
+# Credit to ollama, llama3, and gh-slack.
+# 
+# Prerequisites
+# - Install ollama (https://ollama.com/)
+# - Deploy LLM model where ollama is installed e.g. llama3 (https://ollama.com/library/llama3)
+# - Install GitHub extension gh-slack (https://github.com/rneatherway/gh-slack)
+
+
 
 # Configuration
 repo="<owner>/<repo>"
