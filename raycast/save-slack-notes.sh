@@ -24,16 +24,19 @@
 
 
 
-# Configuration
+# TODO Configurations
 repo="<OWNER>/<REPO>"
-datetimestamp=$(date +"%Y-%m-%dT%H%M")
-temp_file="$datetimestamp-comment_body.txt"
+issue_label="slack-notes" # existing GitHub Issue label
 llm_model="<MODEL NAME>" # e.g. llama3
 title_prompt="Suggest one title to notes in "
 summarise_prompt="Summarise"
 
+# Variables
+datetimestamp=$(date +"%Y-%m-%dT%H%M")
+temp_file="$datetimestamp-comment_body.txt"
+
 # Create a blank issue with pre-populated label, title and body
-issue_url=$(gh issue create -R $repo --label "slack-notes" --title "Slack thread $datetimestamp" --body $1)
+issue_url=$(gh issue create -R $repo --label "$issue_label" --title "Slack thread $datetimestamp" --body $1)
 
 # Extract Slack thread with gh-slack
 comment_url=$(gh slack -i $issue_url $1)
